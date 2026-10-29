@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Road to War: a virtual tour</title>
+<style>
+:root{--bg:#1b1612;--card:#2a211a;--ink:#f3e9d8;--gold:#e0a82e;--mut:#b9a98f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Georgia,serif}
+header{padding:14px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{font-size:1.15rem;margin:0;color:var(--gold)}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+button,.btn{font:inherit;font-size:.95rem;background:var(--card);color:var(--ink);border:1px solid #5a4a37;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-block}
+button[aria-current=true]{background:var(--gold);color:#1b1612;border-color:var(--gold)}
+#view{position:relative;height:min(58vh,480px);overflow:hidden;cursor:grab;touch-action:pan-y;background:#000}
+#view svg{display:block;height:100%;max-width:none}
+.bar{display:flex;align-items:center;justify-content:center;gap:14px;padding:10px;color:var(--mut);font-size:.9rem}
+main{max-width:780px;margin:0 auto;padding:0 20px 24px}
+h2{color:var(--gold);margin:.4em 0 .1em}
+.d{color:var(--mut);font-style:italic;margin:0 0 1em}
+li{margin-bottom:.5em}
+.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:1.2em}
+footer{max-width:780px;margin:0 auto;padding:0 20px 40px;color:var(--mut);font-size:.85rem}
+@keyframes walk{from{transform:translateX(-500px)}to{transform:translateX(2900px)}}
+@keyframes bob{50%{transform:translateY(-7px)}}
+@keyframes glint{0%,100%{opacity:.15;transform:scale(.5)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes swing{50%{transform:rotate(-40deg)}}
+@keyframes dust{from{opacity:.7;transform:translate(0,0) scale(.5)}to{opacity:0;transform:translate(-70px,-30px) scale(2.2)}}
+.walk{animation:walk 60s linear infinite}
+.bob{animation:bob .45s ease-in-out infinite}
+.glint,.swing,.dust{transform-box:fill-box;transform-origin:center}
+.glint{animation:glint 1.4s infinite}
+.swing{transform-origin:bottom center;animation:swing 1s ease-in-out infinite}
+.dust{animation:dust 2.2s ease-out infinite}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<header><h1>Road to War: the Witwatersrand and the Jameson Raid</h1><nav id="nav"></nav></header>
+<div id="view" role="img" tabindex="0"></div>
+<div class="bar"><button id="L" aria-label="Look left">&#9664;</button><span>Drag or use the arrows to look around</span><button id="R" aria-label="Look right">&#9654;</button></div>
+<main id="card"></main>
+<footer>The scenes are illustrations drawn for this tour, not photographs. The Street View buttons show each place as it looks today.</footer>
+<script>
+const u=(id,x,y,s=1,c='#6b5a45',k='')=>`<g transform="translate(${x} ${y}) scale(${s})"><use href="#${id}" class="${k}" style="color:${c}"/></g>`;
+const walk=(d,dl,inner)=>`<g class="walk" style="animation-duration:${d}s;animation-delay:-${dl}s">${inner}</g>`;
+const spark=(x,y,d)=>`<path class="glint" style="animation-delay:${d}s" d="M${x} ${y-12}L${x+3} ${y-3}L${x+12} ${y}L${x+3} ${y+3}L${x} ${y+12}L${x-3} ${y+3}L${x-12} ${y}L${x-3} ${y-3}Z" fill="#ffd84a"/>`;
+const pick=(x,y,d)=>`<g transform="translate(${x} ${y})"><g class="swing" style="animation-delay:${d}s"><path d="M0 0L16-30M8-32L26-26" stroke="#5a3a1e" stroke-width="3" fill="none"/></g></g>`;
+const rider=(x,y,s,c)=>`<g transform="translate(${x} ${y}) scale(${s})"><g class="bob"><use href="#h" style="color:#4a2f1b"/><g transform="translate(-2 -34) scale(.95)"><use href="#p" style="color:${c}"/></g></g></g>`;
+const puff=(x,y,r,d)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#eee" opacity=".6" class="dust" style="animation-delay:${d}s"/>`;
+const defs=`<defs>
+<g id="p"><path d="M-5-22L-9-10M5-22L9-10" stroke="currentColor" stroke-width="3" fill="none"/><path d="M-7 0L-5-24H5L7 0Z" fill="currentColor"/><circle cy="-30" r="5" fill="#d9a67a"/><ellipse cy="-34" rx="9" ry="2.2" fill="#3b2a1c"/><path d="M-5-34Q0-45 5-34Z" fill="#3b2a1c"/></g>
+<g id="q"><use href="#p"/><path d="M5-22L11-42" stroke="currentColor" stroke-width="3" fill="none"/><circle cx="11" cy="-44" r="3.5" fill="#ffd84a"/></g>
+<g id="h"><ellipse cy="-30" rx="26" ry="11" fill="currentColor"/><path d="M18-34L33-54L42-48L30-28Z" fill="currentColor"/><path d="M-18-24L-24 0M-8-22L-10 0M10-22L14 0M20-24L28-2M-26-34Q-38-30-36-14" stroke="currentColor" stroke-width="4" fill="none"/></g></defs>`;
+const base=(a,b,hill,gr,sx)=>`<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="2400" height="500" fill="url(#sk)"/><circle cx="${sx}" cy="120" r="46" fill="#ffe3a0" opacity=".85"/><path d="M0 340Q300 280 600 330T1200 320T1800 305T2400 330V500H0Z" fill="${hill}"/><rect y="385" width="2400" height="115" fill="${gr}"/>`;
+const cols=['#4a5a7a','#7a4a4a','#5a6b3a','#6e5a3a','#3a3a4a','#8a6a2a'];
+const crowd=(n,y,sc)=>Array.from({length:n},(_,i)=>u('p',i*58+(i%2)*10,y+(i%3)*6,sc+(i%2)*.1,cols[i%6])+(i%2?`<rect x="${i*58+18}" y="${y-34}" width="16" height="14" fill="#8a6a3a"/>`:'')).join('');
+
+const s1=()=>base('#f2b870','#fbe3b4','#9b7b52','#b08c5a',520)+
+`<rect x="330" y="335" width="130" height="60" fill="#efe3c8"/><path d="M318 338L395 292L472 338Z" fill="#8a6a3a"/><rect x="385" y="360" width="22" height="35" fill="#5a3a1e"/>
+<path d="M650 395L712 335L774 395Z" fill="#e7dcc4"/><path d="M1650 395L1715 330L1780 395Z" fill="#e7dcc4"/><circle cx="1900" cy="428" r="9" fill="#ff8a2a" class="glint"/>
+<path d="M1020 400L1060 335L1120 348L1170 315L1250 344L1300 330L1345 400Z" fill="#6b5e50"/><path d="M1070 372L1180 350L1290 370" stroke="#e0a82e" stroke-width="5" fill="none"/>`+
+u('p',1000,445,1.6,'#6e4a2a')+u('p',1075,462,1.7,'#3c5a73')+u('q',1200,448,1.9,'#8b3a2a','bob')+spark(1234,372,0)+spark(1262,392,.5)+spark(1212,356,.9)+u('p',1340,452,1.6,'#556b3a')+u('p',1400,444,1.55,'#7a6a55')+pick(1086,436,0)+pick(1356,428,.4)+
+walk(75,12,u('p',0,472,1.7,'#5a4a3a')+u('p',70,478,1.75,'#6b3a3a')+u('p',140,472,1.7,'#3a4a6b'));
+
+const s2=()=>base('#cfc3b0','#eee1c8','#a08a6a','#b9a07a',1900)+
+[[200,150,'#d9c7a3','#8f9aa3'],[380,120,'#c9b48c','#7d8790'],[540,170,'#e1d2b0','#8f9aa3'],[740,130,'#cdb890','#7d8790'],[1100,160,'#d9c7a3','#8f9aa3'],[1300,140,'#c9b48c','#7d8790']].map(([x,w,c,r])=>`<rect x="${x}" y="300" width="${w}" height="95" fill="${c}"/><path d="M${x-8} 302L${x+w/2} 270L${x+w+8} 302Z" fill="${r}"/><rect x="${x+w/2-10}" y="345" width="20" height="50" fill="#5a3a1e"/>`).join('')+
+`<rect x="560" y="222" width="250" height="38" fill="#3b2a1c"/><text x="685" y="250" text-anchor="middle" font-size="24" font-family="Georgia,serif" fill="#e0a82e">JOHANNESBURG</text>
+<rect x="1880" y="205" width="26" height="190" fill="#6b4a3a"/><rect x="1820" y="335" width="150" height="60" fill="#7d6a55"/>`+puff(1893,195,14,0)+puff(1893,195,14,1.1)+
+walk(48,2,crowd(9,455,1.6))+walk(62,30,crowd(7,472,1.7))+walk(75,50,crowd(10,445,1.5))+
+walk(95,25,`<g transform="translate(0 440)"><rect y="-70" width="150" height="34" fill="#7a5a34"/><path d="M0-70Q75-130 150-70Z" fill="#e9e0cc"/><circle cx="25" cy="-12" r="24" fill="none" stroke="#3b2a1c" stroke-width="5"/><circle cx="125" cy="-12" r="24" fill="none" stroke="#3b2a1c" stroke-width="5"/><rect x="40" y="-88" width="70" height="18" fill="#c9a26a"/><text x="75" y="-75" text-anchor="middle" font-size="11" fill="#3b2a1c" font-family="Georgia,serif">DYNAMITE</text></g>`+u('h',200,440,1.3,'#6b4a30')+u('h',275,440,1.3,'#5b3a22'))+
+u('p',1520,462,1.9,'#4a3a2a')+`<path d="M1534 440V366" stroke="#5a3a1e" stroke-width="4"/><rect x="1480" y="332" width="108" height="42" fill="#f3e9d8"/><text x="1534" y="350" text-anchor="middle" font-size="13" fill="#3b2a1c" font-family="Georgia,serif">VOTES FOR</text><text x="1534" y="366" text-anchor="middle" font-size="13" fill="#3b2a1c" font-family="Georgia,serif">UITLANDERS</text>`;
+
+const s3=()=>base('#e89a58','#f6d3a0','#a8845a','#b8935f',1700)+
+`<path d="M240 400V250M225 262H255M700 400V250M685 262H715M1000 400V250M985 262H1015" stroke="#3b2a1c" stroke-width="5"/><path d="M240 262Q470 300 700 262Q760 330 800 395M1000 262Q960 330 930 382" stroke="#2a1f14" stroke-width="2" fill="none"/>
+<ellipse cx="1130" cy="418" rx="70" ry="14" fill="none" stroke="#6b5e50" stroke-width="8"/>
+<path d="M1250 400L1330 322L1420 300L1520 318L1600 296L1700 330L1780 400Z" fill="#7a6248"/>
+<path d="M1700 310V222" stroke="#3b2a1c" stroke-width="3"/><rect x="1702" y="222" width="9" height="42" fill="#2e7d32"/><rect x="1711" y="222" width="48" height="14" fill="#c62828"/><rect x="1711" y="236" width="48" height="14" fill="#f5f5f5"/><rect x="1711" y="250" width="48" height="14" fill="#1e4fa3"/>`+
+[[1380,318],[1470,314],[1560,308],[1640,318]].map(([x,y])=>u('p',x,y,1.3,'#6b5a3a')+`<path d="M${x+2} ${y-34}L${x+34} ${y-22}" stroke="#2a1f14" stroke-width="3"/>`).join('')+puff(1420,282,9,0)+puff(1600,276,9,.9)+
+walk(22,4,puff(-40,470,14,0)+puff(-90,476,16,.7)+rider(0,470,1.7,'#6b5a3a')+rider(120,480,1.75,'#4a5a3a')+rider(250,468,1.7,'#6b5a3a')+rider(370,482,1.75,'#3a4a5a')+rider(500,472,1.7,'#6b5a3a'));
+
+const S=[
+{n:'Gold',t:'Langlaagte, Witwatersrand: gold is discovered',d:'1886',c:'prospectors at the reef',f:.5,la:-26.2,lo:27.99,sc:s1,
+ b:['The discovery of gold in the Witwatersrand resulted in British flooding into the Transvaal in a desperate attempt to gain control over the minerals.','The mineral revolution shifted the balance of power. The Transvaal was initially agricultural land, but the focus quickly shifted, turning it into an international imperial competition.','Britain didn’t want any other European power to gain influence over the mineral wealth first.','The competition for mineral wealth set the stage for conflict.']},
+{n:'Uitlanders',t:'Johannesburg: the influx of Uitlanders',d:'Late 1880s to 1895',c:'newcomers pour into the boom town',f:.55,la:-26.2041,lo:28.0473,sc:s2,
+ i:'The number of Uitlanders in the ZAR kept increasing. What they wanted:',
+ b:['Modern infrastructure, including better transport, water and sewage systems suitable for a capitalist economy.','An end to the Boer monopoly over the supply of dynamite and other mining equipment.','Political representation: they paid high taxes but had no vote.','The right to vote without having to wait 14 years.'],
+ e:'Cecil Rhodes, Prime Minister of the Cape, saw these grievances as a perfect opportunity to take over the ZAR, planning to use the complaints to justify it.'},
+{n:'Jameson Raid',t:'Doornkop: the Jameson Raid',d:'29 December 1895 to 2 January 1896',c:'raiders meet Kruger’s commandos',f:.6,la:-26.23278,lo:27.78333,sc:s3,
+ b:['Pitsani, on the border of Bechuanaland, was the base of a force of mounted police under Dr Jameson.','Uitlanders smuggled guns into Johannesburg, preparing for an uprising, but then decided not to revolt.','Rhodes sent messages telling Jameson not to invade, but the telegraph line had been cut.','Jameson saw a chance to gain fame and ignored Rhodes’s order.','Kruger’s commandos easily captured the invaders at Doornkop.'],
+ e:'Aftermath: Rhodes felt humiliated and resigned as Prime Minister of the Cape. Britain’s fears of a Boer-German alliance grew when the German Kaiser sent Kruger a congratulatory telegram, and tensions rose further when the ZAR bought modern weapons from Germany. War broke out.'}
+];
+
+const $=s=>document.querySelector(s),V=$('#view');let x=0,W=0,dr=null;
+const clamp=()=>{x=Math.max(Math.min(0,V.clientWidth-W),Math.min(0,x))};
+const size=()=>{const p=$('#pano');if(p){W=Math.max(V.clientHeight*4.8,V.clientWidth);p.style.width=W+'px'}};
+const place=()=>{const p=$('#pano');if(p)p.style.transform=`translateX(${x}px)`};
+function show(i){const s=S[i];
+ V.innerHTML=`<svg id="pano" viewBox="0 0 2400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${defs}${s.sc()}</svg>`;
+ V.setAttribute('aria-label','Illustrated scene: '+s.c);
+ size();x=-(W*s.f-V.clientWidth/2);clamp();place();
+ [...$('#nav').children].forEach((b,j)=>b.setAttribute('aria-current',j==i));
+ $('#card').innerHTML=`<h2>${s.t}</h2><p class="d">${s.d} · Illustration: ${s.c}</p>${s.i?`<p>${s.i}</p>`:''}<ul>${s.b.map(t=>`<li>${t}</li>`).join('')}</ul>${s.e?`<p>${s.e}</p>`:''}<p class="links"><a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${s.la},${s.lo}">See it today in Street View</a><a class="btn" target="_blank" rel="noopener" href="https://earth.google.com/web/@${s.la},${s.lo},1700a,6000d,35y,0h,45t,0r">Open in Google Earth</a></p>`;
+ history.replaceState(null,'','#'+(i+1));}
+V.onpointerdown=e=>{dr=e.clientX-x;V.setPointerCapture(e.pointerId);V.style.cursor='grabbing'};
+V.onpointermove=e=>{if(dr!==null){x=e.clientX-dr;clamp();place()}};
+V.onpointerup=V.onpointercancel=()=>{dr=null;V.style.cursor='grab'};
+const nudge=d=>{x+=d;clamp();place()};
+$('#L').onclick=()=>nudge(300);$('#R').onclick=()=>nudge(-300);
+V.onkeydown=e=>{if(e.key=='ArrowLeft')nudge(120);if(e.key=='ArrowRight')nudge(-120)};
+addEventListener('resize',()=>{size();clamp();place()});
+S.forEach((s,i)=>{const b=document.createElement('button');b.textContent=(i+1)+'. '+s.n;b.onclick=()=>show(i);$('#nav').append(b)});
+show(Math.min(2,Math.max(0,(+location.hash.slice(1)||1)-1)));
+</script></body></html>
